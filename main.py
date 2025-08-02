@@ -532,16 +532,14 @@ def handle_all_messages(message):
 
 # --- Запуск бота ---
 if __name__ == '__main__':
-    # Определяем и устанавливаем список команд для бота
-    commands = [
-        types.BotCommand("/start", "Начать новую игру"),
-        types.BotCommand("/rule", "Показать правила игры"),
-        types.BotCommand("/end", "Завершить текущую игру"),
-    ]
-    bot.set_my_commands(commands)
+    import time
+    bot.remove_webhook()
+    time.sleep(1)
     
-    logging.info("Бот запущен. Ожидание обновлений...")
-    try:
-        bot.polling(none_stop=True)
-    except Exception as e:
-        logging.exception("Произошла критическая ошибка в цикле polling.")
+    while True:
+        try:
+            print("Бот запускается...")
+            bot.polling(none_stop=True, interval=5, timeout=60)
+        except Exception as e:
+            print(f"Ошибка: {e}")
+            time.sleep(10)
