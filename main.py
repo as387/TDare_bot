@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 app = Flask(__name__)
 
 # Токен бота будет установлен через переменные окружения
-TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TOKEN = os.getenv('BOT_TOKEN')
 if not TOKEN:
     logging.error("Токен бота не найден в переменных окружения!")
     raise ValueError("Токен бота не найден. Установите переменную окружения TELEGRAM_BOT_TOKEN")
@@ -499,3 +499,4 @@ def webhook():
 if __name__ == '__main__':
     # Для локального тестирования (на Render будет использоваться gunicorn)
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+
