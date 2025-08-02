@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: truth-or-dare-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: TELEGRAM_BOT_TOKEN
+        fromGroup: telegram-bot-env
+      - key: WEBHOOK_URL
+        generateValue: true
+        pattern: https://{{service.name}}.{{domain.name}}/webhook
