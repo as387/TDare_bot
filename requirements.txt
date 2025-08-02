@@ -3,3 +3,5 @@ python-dotenv
 
 python-dotenv
 
+watchdog>=2.1.6
+psutil>=5.8.0
