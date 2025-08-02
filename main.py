@@ -533,13 +533,21 @@ def handle_all_messages(message):
 # --- Запуск бота ---
 if __name__ == '__main__':
     import time
-    bot.remove_webhook()
-    time.sleep(1)
+    bot.remove_webhook()  # Убедитесь, что вебхук отключен
     
+    # Добавьте задержку перед стартом
+    time.sleep(2)
+    
+    # Улучшенная обработка ошибок
     while True:
         try:
-            print("Бот запускается...")
-            bot.polling(none_stop=True, interval=5, timeout=60)
+            logging.info("Бот запускается...")
+            bot.polling(
+                none_stop=True,
+                interval=3,
+                timeout=30,
+                skip_pending=True  # Пропустить ожидающие обновления
+            )
         except Exception as e:
-            print(f"Ошибка: {e}")
-            time.sleep(10)
+            logging.error(f"Ошибка в основном цикле: {e}")
+            time.sleep(10)  # Увеличьте задержку при ошибках
