@@ -532,41 +532,46 @@ def handle_all_messages(message):
 
 if __name__ == '__main__':
     import time
+    import os
     from telebot.apihelper import ApiTelegramException
     
-    # Удаляем вебхук на всякий случай
+    # 1. Очистка перед запуском
     bot.remove_webhook()
-    time.sleep(2)
-    
-    # Очищаем все предыдущие сессии
+    time.sleep(5)
     sessions.clear()
     
-    # Увеличиваем интервал между попытками
-    retry_delay = 5
-    max_retries = 5
+    # 2. Установка критических параметров
+    MAX_RETRIES = 3
+    RETRY_DELAY = 15  # Увеличенная задержка
     
-    for attempt in range(max_retries):
+    # 3. Основной цикл запуска
+    for attempt in range(MAX_RETRIES):
         try:
-            logging.info(f"Попытка запуска бота #{attempt + 1}")
+            logging.info(f"=== ЗАПУСК БОТА (Попытка {attempt + 1}/{MAX_RETRIES}) ===")
+            
+            # Убедимся, что предыдущие соединения закрыты
+            bot.skip_pending = True
+            
+            # Упрощенный polling без restart_on_change
             bot.polling(
                 none_stop=True,
-                interval=5,
+                interval=10,
                 timeout=30,
-                skip_pending=True,
-                restart_on_change=True
+                skip_pending=True
             )
-        except ApiTelegramException as api_error:
-            if "terminated by other getUpdates request" in str(api_error):
-                logging.error(f"Конфликт экземпляров. Попытка {attempt + 1}/{max_retries}")
-                if attempt == max_retries - 1:
-                    logging.critical("Не удалось решить конфликт экземпляров. Требуется ручное вмешательство.")
-                    break
-                time.sleep(retry_delay * (attempt + 1))  # Увеличиваем задержку с каждой попыткой
+            
+        except ApiTelegramException as e:
+            if e.error_code == 409:
+                logging.error("Обнаружен конфликт экземпляров! Принудительная очистка...")
+                # Принудительно убиваем все возможные процессы Python
+                os.system("pkill -f python || true")
+                time.sleep(RETRY_DELAY * (attempt + 1))
                 continue
-            logging.error(f"Ошибка API Telegram: {api_error}")
+            logging.error(f"Ошибка Telegram API: {e}")
             time.sleep(10)
+            
         except Exception as e:
-            logging.error(f"Неожиданная ошибка: {e}")
-            time.sleep(10)
+            logging.error(f"Неожиданная ошибка: {str(e)}")
+            time.sleep(15)
     
-    logging.info("Бот завершил работу")
+    logging.critical("Бот не смог запуститься после нескольких попыток. Необходимо проверить настройки сервера.")
