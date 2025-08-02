@@ -530,24 +530,43 @@ def handle_all_messages(message):
         elif command == '/rule':
             handle_rule_command(message)
 
-# --- Запуск бота ---
 if __name__ == '__main__':
     import time
-    bot.remove_webhook()  # Убедитесь, что вебхук отключен
+    from telebot.apihelper import ApiTelegramException
     
-    # Добавьте задержку перед стартом
+    # Удаляем вебхук на всякий случай
+    bot.remove_webhook()
     time.sleep(2)
     
-    # Улучшенная обработка ошибок
-    while True:
+    # Очищаем все предыдущие сессии
+    sessions.clear()
+    
+    # Увеличиваем интервал между попытками
+    retry_delay = 5
+    max_retries = 5
+    
+    for attempt in range(max_retries):
         try:
-            logging.info("Бот запускается...")
+            logging.info(f"Попытка запуска бота #{attempt + 1}")
             bot.polling(
                 none_stop=True,
-                interval=3,
+                interval=5,
                 timeout=30,
-                skip_pending=True  # Пропустить ожидающие обновления
+                skip_pending=True,
+                restart_on_change=True
             )
+        except ApiTelegramException as api_error:
+            if "terminated by other getUpdates request" in str(api_error):
+                logging.error(f"Конфликт экземпляров. Попытка {attempt + 1}/{max_retries}")
+                if attempt == max_retries - 1:
+                    logging.critical("Не удалось решить конфликт экземпляров. Требуется ручное вмешательство.")
+                    break
+                time.sleep(retry_delay * (attempt + 1))  # Увеличиваем задержку с каждой попыткой
+                continue
+            logging.error(f"Ошибка API Telegram: {api_error}")
+            time.sleep(10)
         except Exception as e:
-            logging.error(f"Ошибка в основном цикле: {e}")
-            time.sleep(10)  # Увеличьте задержку при ошибках
+            logging.error(f"Неожиданная ошибка: {e}")
+            time.sleep(10)
+    
+    logging.info("Бот завершил работу")
